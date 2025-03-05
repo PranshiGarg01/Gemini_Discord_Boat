@@ -3,6 +3,8 @@ import google.generativeai as genai
 import os
 import asyncio
 from datetime import datetime, timedelta
+import yt_dlp
+import ffmpeg
 from discord.ext import commands
 
 # Load API keys from Replit Secrets
@@ -25,12 +27,15 @@ model = genai.GenerativeModel("gemini-1.5-flash")
 intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True  # Required for welcoming new users
+intents.voice_states = True  # Required for music management
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 # Store reminders
 reminders = []
 # Store messages to auto-delete
 expired_messages = []
+# Music queue
+music_queue = []
 
 
 async def reminder_task():
@@ -137,6 +142,58 @@ async def poll(ctx, question: str, *options: str):
     poll_msg = await ctx.send(poll_message)
     for i in range(len(options)):
         await poll_msg.add_reaction(emojis[i])
+
+
+@bot.command()
+async def play(ctx, url: str):
+    voice_channel = ctx.author.voice.channel
+    if not voice_channel:
+        await ctx.send("💔 You need to be in a voice channel to play music!")
+        return
+    vc = await voice_channel.connect()
+    music_queue.append(url)
+    await ctx.send(f'🎵 Added to queue: {url}')
+    if not vc.is_playing():
+        await play_next(ctx, vc)
+
+
+async def play_next(ctx, vc):
+    if music_queue:
+        url = music_queue.pop(0)
+        ydl_opts = {'format': 'bestaudio', 'quiet': True}
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(url, download=False)
+            url2 = info['url']
+        vc.play(discord.FFmpegPCMAudio(url2),
+                after=lambda e: bot.loop.create_task(play_next(ctx, vc)))
+        await ctx.send(f'🎶 Now playing: {url}')
+    else:
+        await vc.disconnect()
+
+
+@bot.command()
+async def skip(ctx):
+    if ctx.voice_client and ctx.voice_client.is_playing():
+        ctx.voice_client.stop()
+        await ctx.send("⏭️ Skipping current song!")
+        await play_next(ctx, ctx.voice_client)
+
+
+@bot.command()
+async def queue(ctx):
+    if music_queue:
+        queue_text = '\n'.join(
+            [f'{i+1}. {song}' for i, song in enumerate(music_queue)])
+        await ctx.send(f'🎼 Current queue:\n{queue_text}')
+    else:
+        await ctx.send("💔 The queue is empty!")
+
+
+@bot.command()
+async def stop(ctx):
+    if ctx.voice_client:
+        await ctx.voice_client.disconnect()
+        await ctx.send("🔇 Music stopped and bot left the channel.")
 
 
 # Run the bot
