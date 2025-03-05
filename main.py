@@ -22,12 +22,23 @@ model = genai.GenerativeModel("gemini-1.5-flash")
 # Set up Discord bot with necessary intents
 intents = discord.Intents.default()
 intents.message_content = True
+intents.members = True  # Required for welcoming new users
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 
 @bot.event
 async def on_ready():
     print(f'🎉 Bot is online as {bot.user}')
+
+
+@bot.event
+async def on_member_join(member):
+    channel = discord.utils.get(
+        member.guild.text_channels,
+        name="general")  # Change to your welcome channel name
+    if channel:
+        await channel.send(
+            f'🎉 Welcome {member.mention} to {member.guild.name}!')
 
 
 @bot.command()
