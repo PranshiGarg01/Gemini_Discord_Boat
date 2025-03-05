@@ -1,6 +1,6 @@
 # 🎶 Your Ultimate Discord Bot 🤖🎉
 
-Welcome to the **ultimate multipurpose Discord bot**, packed with AI chat, reminders, music, polls, and more! 🚀  
+Welcome to the **Discord Bot**, a feature-rich bot designed to make your server interactive, fun, and efficient! From chatting with AI to managing reminders, creating polls, playing music, and even summarizing long texts—this bot does it all! 🚀
 
 ---
 
@@ -48,7 +48,16 @@ Each feature is easy to use and makes your Discord server more interactive!
 - **Skip current song:** `!skip`  
 - **View queue:** `!queue`  
 - **Stop music:** `!stop`  
-- 🔥 *The bot handles queues, plays YouTube songs, and more!*  
+- 🔥 *The bot handles queues, plays YouTube songs, and more!*
+
+### 📜 7. Summarize Long Texts  
+🔍 *Get a quick summary of long messages!*  
+- **Summarize text:** `!summarize <text>`  
+- **Example:**  
+  ```
+  !summarize This is a very long message that needs summarizing...
+  ```  
+- The bot will respond with a concise version! ✨
 
 ---
 
