@@ -145,6 +145,16 @@ async def poll(ctx, question: str, *options: str):
 
 
 @bot.command()
+async def summarize(ctx, *, text: str):
+    try:
+        response = model.generate_content(f"Summarize this: {text}")
+        await ctx.send(f'📝 Summary: {response.text}')
+    except Exception as e:
+        await ctx.send("💔 Error summarizing text. Try again later.")
+        print(f"Error: {e}")
+
+
+@bot.command()
 async def play(ctx, url: str):
     voice_channel = ctx.author.voice.channel
     if not voice_channel:
