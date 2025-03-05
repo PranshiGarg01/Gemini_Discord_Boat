@@ -2,7 +2,7 @@ import discord
 import google.generativeai as genai
 import os
 import asyncio
-from datetime import datetime
+from datetime import datetime, timedelta
 from discord.ext import commands
 
 # Load API keys from Replit Secrets
@@ -29,6 +29,8 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 
 # Store reminders
 reminders = []
+# Store messages to auto-delete
+expired_messages = []
 
 
 async def reminder_task():
@@ -45,10 +47,28 @@ async def reminder_task():
         await asyncio.sleep(60)  # Check every minute
 
 
+async def auto_delete_messages():
+    while True:
+        now = datetime.now()
+        for msg in expired_messages[:]:
+            if now >= msg["delete_at"]:
+                channel = bot.get_channel(msg["channel_id"])
+                if channel:
+                    try:
+                        message = await channel.fetch_message(msg["message_id"]
+                                                              )
+                        await message.delete()
+                    except discord.NotFound:
+                        pass  # Message was already deleted
+                expired_messages.remove(msg)
+        await asyncio.sleep(60)  # Check every minute
+
+
 @bot.event
 async def on_ready():
     print(f'🎉 Bot is online as {bot.user}')
     bot.loop.create_task(reminder_task())  # Start reminder checking loop
+    bot.loop.create_task(auto_delete_messages())  # Start auto-delete loop
 
 
 @bot.event
@@ -90,6 +110,19 @@ async def remind(ctx, reminder_time: str, *, reminder_text: str):
         )
     except ValueError:
         await ctx.send("💔 Invalid date format! Use YYYY-MM-DD HH:MM")
+
+
+@bot.command()
+async def expire(ctx, delete_after: int, *, message_text: str):
+    msg = await ctx.send(message_text)
+    delete_at = datetime.now() + timedelta(seconds=delete_after)
+    expired_messages.append({
+        "message_id": msg.id,
+        "channel_id": ctx.channel.id,
+        "delete_at": delete_at
+    })
+    await ctx.send(f'🕒 This message will be deleted in {delete_after} seconds.'
+                   )
 
 
 # Run the bot
