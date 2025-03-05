@@ -125,5 +125,19 @@ async def expire(ctx, delete_after: int, *, message_text: str):
                    )
 
 
+@bot.command()
+async def poll(ctx, question: str, *options: str):
+    if len(options) < 2 or len(options) > 10:
+        await ctx.send("💔 Please provide between 2 and 10 options.")
+        return
+    poll_message = f'**{question}**\n\n'
+    emojis = ["🐰", "🐶", "🐱", "🐻", "🦄", "🐸", "🐥", "🐢", "🦊", "🐼"]
+    for i, option in enumerate(options):
+        poll_message += f'{emojis[i]} {option}\n'
+    poll_msg = await ctx.send(poll_message)
+    for i in range(len(options)):
+        await poll_msg.add_reaction(emojis[i])
+
+
 # Run the bot
 bot.run(DISCORD_BOT_TOKEN)
